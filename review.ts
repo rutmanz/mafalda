@@ -1,3 +1,5 @@
+#!/usr/bin/env node
+
 import { exec } from "child_process";
 
 const me = "rutmanz";
@@ -82,8 +84,8 @@ class ReviewStatus {
                     this.requested
                         ? "OUTDATED"
                         : this.stale
-                        ? "STANDING"
-                        : "CURRENT"
+                          ? "STANDING"
+                          : "CURRENT"
                 ].padEnd(25);
             output += colorMsg[this.state];
         } else if (this.requested) {
@@ -118,12 +120,12 @@ exec(
         prs.sort(
             (a, b) =>
                 new Date(a.createdAt).getTime() -
-                new Date(b.createdAt).getTime()
+                new Date(b.createdAt).getTime(),
         )
             .sort(
                 (a, b) =>
                     (a.author.login == me ? 1 : 0) -
-                    (b.author.login == me ? 1 : 0)
+                    (b.author.login == me ? 1 : 0),
             )
             .forEach((pr) => {
                 const reviews: Record<string, ReviewStatus> = {};
@@ -136,7 +138,7 @@ exec(
                     .sort(
                         (a, b) =>
                             new Date(a.submittedAt).getTime() -
-                            new Date(b.submittedAt).getTime()
+                            new Date(b.submittedAt).getTime(),
                     )
 
                     .forEach((review) => {
@@ -145,23 +147,24 @@ exec(
                             reviews[review.author.login] == null
                         ) {
                             reviews[review.author.login] ??= new ReviewStatus(
-                                review.author.login
+                                review.author.login,
                             );
                             reviews[review.author.login].state = review.state;
                             reviews[review.author.login].stale =
                                 review.commit.oid != pr.headRefOid;
                             reviews[review.author.login].lastUpdate = new Date(
-                                review.submittedAt
+                                review.submittedAt,
                             ).getTime();
                         }
                     });
                 const myReview = Object.values(reviews).find(
-                    (review) => review.user == me
+                    (review) => review.user == me,
                 );
 
                 const activeFailure = Object.values(reviews).some(
                     (review) =>
-                        review.state == "CHANGES_REQUESTED" && !review.requested
+                        review.state == "CHANGES_REQUESTED" &&
+                        !review.requested,
                 );
                 const needsMe = myReview?.requested ?? false;
                 if (
@@ -194,8 +197,8 @@ exec(
         myReviews.map(({ review, pr }) => {
             console.log(
                 review.getStateString().padEnd(52, " ") +
-                    `\x1b[35m#${pr.number} | ${pr.title}\x1b[0m`
+                    `\x1b[35m#${pr.number} | ${pr.title}\x1b[0m`,
             );
         });
-    }
+    },
 );
