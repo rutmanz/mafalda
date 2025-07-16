@@ -5,7 +5,7 @@ import { exec } from "child_process";
 const me = "rutmanz";
 
 type ReviewState = "CHANGES_REQUESTED" | "COMMENTED" | "APPROVED";
-
+type CheckState = "PASS" | "FAIL" | "PENDING";
 interface Pr {
     author: {
         id: string;
@@ -44,6 +44,12 @@ interface Pr {
         | "APPROVED"
         | "MY_REVIEW_REQUIRED";
     mergeStateStatus: "DIRTY" | "BLOCKED" | "BEHIND" | "UNKNOWN";
+    statusCheckRollup: {
+        __typename: "CheckRun";
+        conclusion: "FAILURE" | "SUCCESS" | "NEUTRAL" | null;
+        status: "COMPLETED" | "PENDING" | null;
+        name: string;
+    }[];
 }
 
 const colorMsg = {
@@ -58,6 +64,10 @@ const colorMsg = {
     DIRTY: "\x1b[31mCONFLICTS\x1b[0m",
     BEHIND: "\x1b[34mBEHIND\x1b[0m",
     BLOCKED: "\x1b[32mCLEAN\x1b[0m",
+
+    PASS: "\x1b[32mPASSING\x1b[0m",
+    FAIL: "\x1b[31mFAILING\x1b[0m",
+    PENDING: "\x1b[33mPENDING\x1b[0m",
 } as const;
 
 const decisionColors = {
@@ -106,7 +116,7 @@ class ReviewStatus {
     }
 }
 exec(
-    "gh pr list --json author,reviews,number,state,headRefOid,reviewRequests,title,updatedAt,createdAt,reviewDecision,mergeStateStatus --draft=false",
+    "gh pr list --json author,reviews,number,state,headRefOid,reviewRequests,title,updatedAt,createdAt,reviewDecision,mergeStateStatus,statusCheckRollup --draft=false",
     (error, stdout, stderr) => {
         if (error) {
             console.error(`Error executing command: ${error.message}`);
@@ -177,11 +187,28 @@ exec(
                     pr.reviewDecision = "MY_REVIEW_REQUIRED";
                 }
 
+                const anyPending = pr.statusCheckRollup.some(
+                    (s) => s.status == "PENDING",
+                );
+                const anyFail = pr.statusCheckRollup.some(
+                    (s) => s.status == "COMPLETED" && s.conclusion == "FAILURE",
+                );
+                const checkStatus: CheckState = anyFail
+                    ? "FAIL"
+                    : anyPending
+                      ? "PENDING"
+                      : "PASS";
+
                 const title = `${decisionColors[pr.reviewDecision]}${
                     pr.author.login == me ? "\x1b[1m⭐︎" : ""
                 }${pr.number} | ${pr.title}\x1b[0m`;
                 console.log(title);
-                console.log("  " + colorMsg[pr.mergeStateStatus]);
+                console.log(
+                    "  " +
+                        colorMsg[pr.mergeStateStatus] +
+                        "  " +
+                        colorMsg[checkStatus],
+                );
 
                 if (myReview) {
                     myReviews.push({ pr, review: myReview });
