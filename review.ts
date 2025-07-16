@@ -34,7 +34,7 @@ interface Pr {
         __typename: "User";
         login: string;
     }[];
-    state: "OPEN";
+    state: "OPEN" | "MERGED" | "CLOSED";
     headRefOid: string;
     updatedAt: string;
     createdAt: string;
@@ -42,7 +42,8 @@ interface Pr {
         | "REVIEW_REQUIRED"
         | "CHANGES_REQUESTED"
         | "APPROVED"
-        | "MY_REVIEW_REQUIRED";
+        | "MY_REVIEW_REQUIRED"
+        | "DRAFT"; // not really fix later
     mergeStateStatus: "DIRTY" | "BLOCKED" | "BEHIND" | "UNKNOWN";
     statusCheckRollup: {
         __typename: "CheckRun";
@@ -50,6 +51,9 @@ interface Pr {
         status: "COMPLETED" | "PENDING" | null;
         name: string;
     }[];
+    mergedAt: string | null;
+    closedAt: string | null;
+    isDraft: boolean;
 }
 
 const colorMsg = {
@@ -75,6 +79,7 @@ const decisionColors = {
     CHANGES_REQUESTED: "\x1b[41m",
     REVIEW_REQUIRED: "\x1b[43m",
     MY_REVIEW_REQUIRED: "\x1b[45m",
+    DRAFT: "\x1b[100m",
 } as const;
 
 class ReviewStatus {
@@ -116,7 +121,7 @@ class ReviewStatus {
     }
 }
 exec(
-    "gh pr list --json author,reviews,number,state,headRefOid,reviewRequests,title,updatedAt,createdAt,reviewDecision,mergeStateStatus,statusCheckRollup --draft=false",
+    "gh pr list --json author,reviews,number,state,headRefOid,reviewRequests,title,updatedAt,createdAt,reviewDecision,mergeStateStatus,statusCheckRollup,state,mergedAt,isDraft,closedAt --state open",
     (error, stdout, stderr) => {
         if (error) {
             console.error(`Error executing command: ${error.message}`);
@@ -186,6 +191,9 @@ exec(
                 if (needsMe) {
                     pr.reviewDecision = "MY_REVIEW_REQUIRED";
                 }
+                if (pr.isDraft) {
+                    pr.reviewDecision = "DRAFT";
+                }
 
                 const anyPending = pr.statusCheckRollup.some(
                     (s) => s.status == "PENDING",
@@ -227,5 +235,23 @@ exec(
                     `\x1b[35m#${pr.number} | ${pr.title}\x1b[0m`,
             );
         });
+
+        // console.log("\n====== RECENTLY CLOSED =======");
+        // prs.filter(
+        //     (pr) =>
+        //         pr.state == "MERGED" &&
+        //         Date.now() - new Date(pr.mergedAt!).getTime() <
+        //             1000 * 60 * 60 * 12,
+        // ).map((pr) => {
+        //     console.log(`\x1b[45m#${pr.number} | ${pr.title}\x1b[0m`);
+        // });
+        // prs.filter(
+        //     (pr) =>
+        //         pr.state == "CLOSED" &&
+        //         Date.now() - new Date(pr.closedAt!).getTime() <
+        //             1000 * 60 * 60 * 12,
+        // ).map((pr) => {
+        //     console.log(`\x1b[45m#${pr.number} | ${pr.title}\x1b[0m`);
+        // });
     },
 );
