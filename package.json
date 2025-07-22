@@ -3,5 +3,8 @@
   "devDependencies": {
     "@types/node": "^24.0.13",
     "prettier": "^3.6.2"
+  },
+  "dependencies": {
+    "esbuild": "^0.25.8"
   }
 }
