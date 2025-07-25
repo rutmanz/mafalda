@@ -39,7 +39,7 @@ exec(
         prs.filter((pr) => pr.myReview != null).map((pr) => {
             console.log(
                 pr.myReview!.getStateString().padEnd(52, " ") +
-                    `\x1b[35m#${pr.simpleTitle}\x1b[0m`,
+                    `\x1b[35m${pr.simpleTitle}\x1b[0m`,
             );
         });
 

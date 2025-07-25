@@ -6,6 +6,7 @@ export const colorMsg = {
     CURRENT: "\x1b[34mCURRENT\x1b[0m",
     STANDING: "\x1b[34mSTANDING\x1b[0m",
     OUTDATED: "\x1b[33mOUTDATED\x1b[0m",
+    PENDING: "\x1b[33mPENDING\x1b[0m",
     REQUESTED: "\x1b[90mREQUESTED\x1b[0m",
     COMMENTED: "\x1b[90mCOMMENTED\x1b[0m",
 } as const;

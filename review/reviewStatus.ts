@@ -22,7 +22,7 @@ export class ReviewStatus {
                           ? "STANDING"
                           : "CURRENT"
                 ].padEnd(25);
-            output += colorMsg[this.state];
+            output += colorMsg[this.state] ?? this.state;
         } else if (this.requested) {
             output += colorMsg.REQUESTED.padEnd(25);
         }
